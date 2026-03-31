@@ -72,7 +72,7 @@ export function ArtCanvas({
     // ── Load BG ────────────────────────────────────────────────────────────────
     useEffect(() => {
         if (!bgUrl) { bgImgRef.current = null; return; }
-        loadImage(bgUrl).then(img => { bgImgRef.current = img; draw(); }).catch(() => {});
+        loadImage(bgUrl).then(img => { bgImgRef.current = img; draw(); }).catch(() => { });
     }, [bgUrl]);
 
     // ── Load art images ────────────────────────────────────────────────────────
@@ -360,7 +360,7 @@ export function ArtCanvas({
             onMove(ds.id, nx, ny);
         } else {
             // Resize: delta de distância do centro
-            const frame = frames.find(f => f.id === ds.id)!;
+            frames.find(f => f.id === ds.id);
             const aspect = ds.origW / ds.origH;
 
             // usa apenas ddx para simplificar resize proporcional

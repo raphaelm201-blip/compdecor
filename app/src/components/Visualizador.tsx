@@ -3,7 +3,7 @@ import { ArtCanvas, type FrameItem } from './ArtCanvas';
 import { OrcamentoModal } from './OrcamentoModal';
 import { CatalogoModal } from './CatalogoModal';
 import { AdminPanel } from './AdminPanel';
-import { salvarArte, type OrcamentoHistorico } from '../lib/storage';
+import { type OrcamentoHistorico } from '../lib/storage';
 import { authService, type Obra } from '../services/supabase';
 
 type Toast = { text: string; type: 'success' | 'error' } | null;
@@ -74,7 +74,7 @@ export function Visualizador({ initialData }: { initialData?: OrcamentoHistorico
 
     useEffect(() => {
         authService.getUser().then(user => setIsAdmin(!!user));
-        const { data: { subscription } } = authService.onAuthChange((_e, session) => {
+        const { data: { subscription } } = authService.onAuthChange(async (_e, session) => {
             setIsAdmin(!!session?.user);
         });
         return () => subscription.unsubscribe();
