@@ -681,7 +681,8 @@ function AdminsTab({ onToast }: { onToast: (t: string, type?: 'success' | 'error
     setLoadingAdmins(true);
     try {
       // Busca usuários via Supabase Admin API (service role) — se não tiver, lista pelo banco
-      const { data, error } = await supabase.auth.admin?.listUsers?.() || {};
+      const result = await supabase.auth.admin?.listUsers?.() || {};
+      const data = (result as any).data;
       if (data?.users) {
         setAdmins(data.users.map((u: any) => ({
           id: u.id,
@@ -740,7 +741,7 @@ function AdminsTab({ onToast }: { onToast: (t: string, type?: 'success' | 'error
     if (adminPassword !== adminConfirm) { onToast('Senhas não conferem', 'error'); return; }
     setSavingAdmin(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email: adminEmail,
         password: adminPassword,
       });
