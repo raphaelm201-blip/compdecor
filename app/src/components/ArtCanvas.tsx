@@ -41,9 +41,11 @@ const HANDLE_R = 6; // raio dos handles de resize (px no canvas)
 const imgCache = new Map<string, HTMLImageElement>();
 
 function loadImage(src: string): Promise<HTMLImageElement> {
+    // Limpa cache para forçar reload com crossOrigin
     if (imgCache.has(src)) return Promise.resolve(imgCache.get(src)!);
     return new Promise((resolve, reject) => {
         const img = new Image();
+        img.crossOrigin = 'anonymous';
         img.onload = () => { imgCache.set(src, img); resolve(img); };
         img.onerror = reject;
         img.src = src;
