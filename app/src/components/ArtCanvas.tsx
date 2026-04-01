@@ -2,8 +2,6 @@ import {
     useRef,
     useEffect,
     useCallback,
-    useImperativeHandle,
-    forwardRef,
     MouseEvent,
     TouchEvent,
 } from 'react';
@@ -33,7 +31,7 @@ interface CanvasProps {
     onDelete: (id: string) => void;
     showGrid: boolean;
     onReady: (canvas: HTMLCanvasElement) => void;
-
+    showUI?: boolean; // se false, não desenha seleção (para exportar)
 }
 
 const CANVAS_W = 900;
@@ -47,23 +45,19 @@ function loadImage(src: string): Promise<HTMLImageElement> {
     if (imgCache.has(src)) return Promise.resolve(imgCache.get(src)!);
     return new Promise((resolve, reject) => {
         const img = new Image();
+        img.crossOrigin = 'anonymous';
         img.onload = () => { imgCache.set(src, img); resolve(img); };
         img.onerror = reject;
         img.src = src;
     });
 }
 
-// ─── Ref handle ──────────────────────────────────────────────────────────────
-export interface ArtCanvasHandle {
-    captureClean: () => string | null;
-}
-
 // ─── Component ────────────────────────────────────────────────────────────────
-export const ArtCanvas = forwardRef<ArtCanvasHandle, CanvasProps>(function ArtCanvas({
+export function ArtCanvas({
     bgUrl, frames, selectedId,
     onSelect, onMove, onResize, onDelete,
-    showGrid, onReady,
-}: CanvasProps, ref: React.Ref<ArtCanvasHandle>) {
+    showGrid, onReady, showUI = true,
+}: CanvasProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const imagesRef = useRef<Map<string, HTMLImageElement>>(new Map());
     const bgImgRef = useRef<HTMLImageElement | null>(null);
@@ -169,8 +163,8 @@ export const ArtCanvas = forwardRef<ArtCanvasHandle, CanvasProps>(function ArtCa
             ctx.drawImage(img, -hw, -hh, frame.width, frame.height);
             ctx.restore();
 
-            // Selection UI
-            if (isSelected) {
+            // Selection UI — omitido quando showUI=false (exportação)
+            if (isSelected && showUI) {
                 ctx.save();
                 ctx.translate(cx, cy);
                 ctx.rotate((frame.rotation * Math.PI) / 180);
@@ -210,7 +204,7 @@ export const ArtCanvas = forwardRef<ArtCanvasHandle, CanvasProps>(function ArtCa
                 ctx.restore();
 
                 // Label flutuante com título e preço
-                if (frame.titulo || frame.preco > 0) {
+                if ((frame.titulo || frame.preco > 0) && showUI) {
                     const labelX = cx;
                     const labelY = cy + hh + 10 + 22;
                     const label = [
@@ -407,56 +401,6 @@ export const ArtCanvas = forwardRef<ArtCanvasHandle, CanvasProps>(function ArtCa
         e.preventDefault();
     };
 
-    // ── Captura limpa sem UI de seleção ─────────────────────────────────────────
-    useImperativeHandle(ref, () => ({
-        captureClean: () => {
-            // Cria canvas temporário e desenha sem UI
-            const tmpCanvas = document.createElement('canvas');
-            tmpCanvas.width = CANVAS_W;
-            tmpCanvas.height = CANVAS_H;
-            const ctx = tmpCanvas.getContext('2d')!;
-
-            // Fundo
-            if (bgImgRef.current) {
-                ctx.drawImage(bgImgRef.current, 0, 0, CANVAS_W, CANVAS_H);
-            }
-
-            // Quadros sem UI de seleção
-            const sorted = [...frames].sort(a => a.id === selectedId ? 1 : -1);
-            for (const frame of sorted) {
-                const img = imagesRef.current.get(frame.artUrl);
-                if (!img) continue;
-                const cx = (frame.x / 100) * CANVAS_W;
-                const cy = (frame.y / 100) * CANVAS_H;
-                const hw = frame.width / 2;
-                const hh = frame.height / 2;
-
-                ctx.save();
-                ctx.translate(cx, cy);
-                ctx.rotate((frame.rotation * Math.PI) / 180);
-                ctx.globalAlpha = frame.opacity;
-
-                // Moldura
-                ctx.shadowColor = 'rgba(0,0,0,0.5)';
-                ctx.shadowBlur = 16;
-                ctx.shadowOffsetX = 4;
-                ctx.shadowOffsetY = 6;
-                ctx.fillStyle = '#1a1208';
-                ctx.fillRect(-hw - 8, -hh - 8, frame.width + 16, frame.height + 16);
-
-                ctx.shadowColor = 'transparent';
-                ctx.drawImage(img, -hw, -hh, frame.width, frame.height);
-                ctx.restore();
-            }
-
-            try {
-                return tmpCanvas.toDataURL('image/png');
-            } catch {
-                return null;
-            }
-        }
-    }), [frames, selectedId, bgImgRef.current]);
-
     return (
         <canvas
             ref={canvasRef}
@@ -487,4 +431,4 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
     ctx.lineTo(x, y + r);
     ctx.quadraticCurveTo(x, y, x + r, y);
     ctx.closePath();
-});
+}
