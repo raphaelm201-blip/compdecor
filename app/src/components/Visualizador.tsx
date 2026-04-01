@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { ArtCanvas, type FrameItem } from './ArtCanvas';
+import { ArtCanvas, type FrameItem, type ArtCanvasHandle } from './ArtCanvas';
 import { OrcamentoModal } from './OrcamentoModal';
 import { CatalogoModal } from './CatalogoModal';
 import { AdminPanel } from './AdminPanel';
@@ -57,11 +57,12 @@ export function Visualizador({ initialData }: { initialData?: OrcamentoHistorico
 
     // ── Canvas ref ────────────────────────────────────────────────────────────
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    const artCanvasRef = useRef<ArtCanvasHandle | null>(null);
     const onReady = useCallback((c: HTMLCanvasElement) => { canvasRef.current = c; }, []);
 
     const [showGrid, setShowGrid] = useState(false);
     const [toast, setToast] = useState<Toast>(null);
-    const [exportMode, setExportMode] = useState(false);
+
 
     // Orçamento
     const [showModal, setShowModal] = useState(false);
@@ -172,16 +173,10 @@ export function Visualizador({ initialData }: { initialData?: OrcamentoHistorico
     };
 
     const handleAbrirOrcamento = () => {
-        // Ativa modo exportação — canvas redesenha sem UI de seleção
-        setExportMode(true);
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                const dataUrl = canvasRef.current?.toDataURL('image/png') ?? null;
-                setComposicaoDataUrl(dataUrl);
-                setExportMode(false);
-                setShowModal(true);
-            });
-        });
+        // Captura limpa via ref — desenha sem UI de seleção
+        const dataUrl = artCanvasRef.current?.captureClean() ?? null;
+        setComposicaoDataUrl(dataUrl);
+        setShowModal(true);
     };
 
     // ── Teclado: Delete/Backspace remove selecionado ──────────────────────────
@@ -508,6 +503,7 @@ export function Visualizador({ initialData }: { initialData?: OrcamentoHistorico
                     ) : (
                         <>
                             <ArtCanvas
+                                ref={artCanvasRef}
                                 bgUrl={bg.url}
                                 frames={frames}
                                 selectedId={selectedId}
@@ -517,7 +513,6 @@ export function Visualizador({ initialData }: { initialData?: OrcamentoHistorico
                                 onDelete={handleDelete}
                                 showGrid={showGrid}
                                 onReady={onReady}
-                                exportMode={exportMode}
                             />
                             {frames.length > 0 && !selectedFrame && (
                                 <div className="canvas-hint">
