@@ -61,6 +61,7 @@ export function Visualizador({ initialData }: { initialData?: OrcamentoHistorico
 
     const [showGrid, setShowGrid] = useState(false);
     const [toast, setToast] = useState<Toast>(null);
+    const [exportMode, setExportMode] = useState(false);
 
     // Orçamento
     const [showModal, setShowModal] = useState(false);
@@ -171,18 +172,16 @@ export function Visualizador({ initialData }: { initialData?: OrcamentoHistorico
     };
 
     const handleAbrirOrcamento = () => {
-        // Deseleciona temporariamente para capturar sem UI de seleção
-        const currentSelected = selectedId;
-        setSelectedId(null);
-
-        // Aguarda o canvas redesenhar sem a seleção
-        setTimeout(() => {
-            const dataUrl = canvasRef.current?.toDataURL('image/png') ?? null;
-            setComposicaoDataUrl(dataUrl);
-            setShowModal(true);
-            // Restaura a seleção
-            setSelectedId(currentSelected);
-        }, 100);
+        // Ativa modo exportação — canvas redesenha sem UI de seleção
+        setExportMode(true);
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                const dataUrl = canvasRef.current?.toDataURL('image/png') ?? null;
+                setComposicaoDataUrl(dataUrl);
+                setExportMode(false);
+                setShowModal(true);
+            });
+        });
     };
 
     // ── Teclado: Delete/Backspace remove selecionado ──────────────────────────
@@ -518,6 +517,7 @@ export function Visualizador({ initialData }: { initialData?: OrcamentoHistorico
                                 onDelete={handleDelete}
                                 showGrid={showGrid}
                                 onReady={onReady}
+                                exportMode={exportMode}
                             />
                             {frames.length > 0 && !selectedFrame && (
                                 <div className="canvas-hint">

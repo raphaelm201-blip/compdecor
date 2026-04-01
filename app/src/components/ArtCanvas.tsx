@@ -31,6 +31,7 @@ interface CanvasProps {
     onDelete: (id: string) => void;
     showGrid: boolean;
     onReady: (canvas: HTMLCanvasElement) => void;
+    exportMode?: boolean; // quando true, não desenha UI de seleção
 }
 
 const CANVAS_W = 900;
@@ -41,11 +42,9 @@ const HANDLE_R = 6; // raio dos handles de resize (px no canvas)
 const imgCache = new Map<string, HTMLImageElement>();
 
 function loadImage(src: string): Promise<HTMLImageElement> {
-    // Limpa cache para forçar reload com crossOrigin
     if (imgCache.has(src)) return Promise.resolve(imgCache.get(src)!);
     return new Promise((resolve, reject) => {
         const img = new Image();
-        img.crossOrigin = 'anonymous';
         img.onload = () => { imgCache.set(src, img); resolve(img); };
         img.onerror = reject;
         img.src = src;
@@ -56,7 +55,7 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 export function ArtCanvas({
     bgUrl, frames, selectedId,
     onSelect, onMove, onResize, onDelete,
-    showGrid, onReady,
+    showGrid, onReady, exportMode = false,
 }: CanvasProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const imagesRef = useRef<Map<string, HTMLImageElement>>(new Map());
@@ -163,8 +162,8 @@ export function ArtCanvas({
             ctx.drawImage(img, -hw, -hh, frame.width, frame.height);
             ctx.restore();
 
-            // Selection UI
-            if (isSelected) {
+            // Selection UI — não renderiza em modo exportação
+            if (isSelected && !exportMode) {
                 ctx.save();
                 ctx.translate(cx, cy);
                 ctx.rotate((frame.rotation * Math.PI) / 180);
