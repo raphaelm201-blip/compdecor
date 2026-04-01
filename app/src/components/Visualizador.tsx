@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { flushSync } from 'react-dom';
 import { ArtCanvas, type FrameItem } from './ArtCanvas';
 import { OrcamentoModal } from './OrcamentoModal';
 import { CatalogoModal } from './CatalogoModal';
@@ -172,14 +173,13 @@ export function Visualizador({ initialData }: { initialData?: OrcamentoHistorico
     };
 
     const handleAbrirOrcamento = () => {
-        setShowUI(false);
-        // Espera o React re-renderizar o canvas sem UI antes de capturar
-        setTimeout(() => {
-            const dataUrl = canvasRef.current?.toDataURL('image/png') ?? null;
-            setComposicaoDataUrl(dataUrl);
-            setShowUI(true);
-            setShowModal(true);
-        }, 300);
+        // flushSync garante que o React aplica o estado ANTES de continuar
+        flushSync(() => { setShowUI(false); });
+        // Agora o canvas JÁ foi redesenhado sem UI — captura imediata
+        const dataUrl = canvasRef.current?.toDataURL('image/png') ?? null;
+        setComposicaoDataUrl(dataUrl);
+        setShowUI(true);
+        setShowModal(true);
     };
 
     // ── Teclado: Delete/Backspace remove selecionado ──────────────────────────
