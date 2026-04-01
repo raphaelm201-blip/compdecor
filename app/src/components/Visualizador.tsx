@@ -171,9 +171,18 @@ export function Visualizador({ initialData }: { initialData?: OrcamentoHistorico
     };
 
     const handleAbrirOrcamento = () => {
-        const dataUrl = canvasRef.current?.toDataURL('image/png') ?? null;
-        setComposicaoDataUrl(dataUrl);
-        setShowModal(true);
+        // Deseleciona temporariamente para capturar sem UI de seleção
+        const currentSelected = selectedId;
+        setSelectedId(null);
+
+        // Aguarda o canvas redesenhar sem a seleção
+        setTimeout(() => {
+            const dataUrl = canvasRef.current?.toDataURL('image/png') ?? null;
+            setComposicaoDataUrl(dataUrl);
+            setShowModal(true);
+            // Restaura a seleção
+            setSelectedId(currentSelected);
+        }, 100);
     };
 
     // ── Teclado: Delete/Backspace remove selecionado ──────────────────────────
