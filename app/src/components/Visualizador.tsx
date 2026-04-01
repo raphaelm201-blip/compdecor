@@ -172,14 +172,14 @@ export function Visualizador({ initialData }: { initialData?: OrcamentoHistorico
     };
 
     const handleAbrirOrcamento = () => {
-        // Esconde UI de seleção, aguarda 2 frames para o canvas redesenhar limpo
         setShowUI(false);
+        // Espera o React re-renderizar o canvas sem UI antes de capturar
         setTimeout(() => {
             const dataUrl = canvasRef.current?.toDataURL('image/png') ?? null;
             setComposicaoDataUrl(dataUrl);
             setShowUI(true);
             setShowModal(true);
-        }, 150);
+        }, 300);
     };
 
     // ── Teclado: Delete/Backspace remove selecionado ──────────────────────────

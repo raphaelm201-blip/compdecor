@@ -31,7 +31,7 @@ interface CanvasProps {
     onDelete: (id: string) => void;
     showGrid: boolean;
     onReady: (canvas: HTMLCanvasElement) => void;
-    showUI?: boolean; // se false, não desenha seleção (para exportar)
+    showUI?: boolean;
 }
 
 const CANVAS_W = 900;
@@ -40,6 +40,8 @@ const HANDLE_R = 6; // raio dos handles de resize (px no canvas)
 
 // ─── Image cache ──────────────────────────────────────────────────────────────
 const imgCache = new Map<string, HTMLImageElement>();
+// Limpa cache para garantir crossOrigin em todas as imagens
+imgCache.clear();
 
 function loadImage(src: string): Promise<HTMLImageElement> {
     if (imgCache.has(src)) return Promise.resolve(imgCache.get(src)!);
@@ -163,7 +165,7 @@ export function ArtCanvas({
             ctx.drawImage(img, -hw, -hh, frame.width, frame.height);
             ctx.restore();
 
-            // Selection UI — omitido quando showUI=false (exportação)
+            // Selection UI — omitido quando showUI=false
             if (isSelected && showUI) {
                 ctx.save();
                 ctx.translate(cx, cy);
@@ -231,7 +233,7 @@ export function ArtCanvas({
         }
 
         if (canvasRef.current) onReady(canvasRef.current);
-    }, [frames, selectedId, showGrid, bgUrl, onReady]);
+    }, [frames, selectedId, showGrid, bgUrl, onReady, showUI]);
 
     useEffect(() => { draw(); }, [draw]);
 
